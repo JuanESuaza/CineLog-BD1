@@ -1,0 +1,115 @@
+<div class="filter-bar">
+  <div class="filter-bar__inner">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" [(ngModel)]="busqueda" (keyup.enter)="buscar()" placeholder="Buscar por titulo..." />
+    </div>
+    <select [(ngModel)]="tipoFiltro" (change)="buscar()">
+      <option value="">Todos los tipos</option>
+      <option value="Pelicula">Peliculas</option>
+      <option value="Serie">Series</option>
+    </select>
+    <select [(ngModel)]="generoFiltro" (change)="buscar()">
+      <option value="">Todos los generos</option>
+      <option *ngFor="let g of generos()" [value]="g.nombre">{{ g.nombre }}</option>
+    </select>
+    <button class="btn btn-primary" (click)="buscar()">Buscar</button>
+    <button *ngIf="modoFiltro()" class="btn btn-ghost" (click)="limpiarFiltros()">Limpiar</button>
+  </div>
+</div>
+
+<div *ngIf="loading()" class="loading-screen" style="min-height:60vh">
+  <div class="spinner"></div><p>Cargando catalogo...</p>
+</div>
+
+<div *ngIf="!loading() && modoFiltro()" class="page-content">
+  <div class="section-header">
+    <h2>Resultados <span>({{ resultados().length }})</span></h2>
+  </div>
+  <div *ngIf="!resultados().length" class="empty-state">
+    <div class="empty-icon">🎬</div>
+    <h3>Sin resultados</h3>
+    <p>No encontramos contenidos con esos filtros.</p>
+    <button class="btn btn-secondary" (click)="limpiarFiltros()">Ver todo el catalogo</button>
+  </div>
+  <div *ngIf="resultados().length" class="grid-resultados">
+    <div class="content-card" *ngFor="let c of resultados()" (click)="abrirDetalle(c.id_contenido)">
+      <div class="content-card__poster">
+        <div class="content-card__placeholder">{{ c.titulo.charAt(0) }}</div>
+        <div class="content-card__overlay">
+          <span class="play-btn">&#9654;</span>
+          <div class="content-card__info">
+            <span class="badge" [class]="c.tipo === 'Pelicula' ? 'badge-red' : 'badge-green'">{{ c.tipo }}</span>
+            <span *ngIf="c.puntuacion_promedio" class="score">&#9733; {{ c.puntuacion_promedio }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="content-card__footer">
+        <p class="content-card__title">{{ c.titulo }}</p>
+        <span class="content-card__year">{{ c.anio_estreno }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-container *ngIf="!loading() && !modoFiltro()">
+  <div *ngIf="top10().length">
+    <div class="hero-section">
+      <div class="hero-bg" style="background-image:url('https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1920&q=80')"></div>
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-badge">TOP 10 EN CINELOG</div>
+        <h1 class="hero-title">{{ top10()[0].titulo }}</h1>
+        <div class="hero-meta">
+          <span class="badge" [class]="top10()[0].tipo === 'Pelicula' ? 'badge-red' : 'badge-green'">{{ top10()[0].tipo }}</span>
+          <span>{{ top10()[0].anio_estreno }}</span>
+          <span class="hero-score">&#9733; {{ top10()[0].promedio }}/10</span>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" (click)="abrirDetalle(top10()[0].id_contenido)">Ver detalles</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="carousel-section">
+        <h2 class="carousel-title">Top 10 de la semana</h2>
+        <div class="carousel">
+          <div class="carousel-card" *ngFor="let c of top10(); let i = index" (click)="abrirDetalle(c.id_contenido)">
+            <div class="carousel-card__rank">{{ i + 1 }}</div>
+            <div class="carousel-card__poster">
+              <div class="carousel-card__placeholder">{{ c.titulo.charAt(0) }}</div>
+              <div class="carousel-card__hover">
+                <span class="play-btn-sm">&#9654;</span>
+                <span class="badge badge-gold">&#9733; {{ c.promedio }}</span>
+              </div>
+            </div>
+            <p class="carousel-card__title">{{ c.titulo }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="carousel-section" *ngFor="let row of porGenero()">
+        <h2 class="carousel-title">{{ row.genero }}</h2>
+        <div class="carousel">
+          <div class="carousel-card" *ngFor="let c of row.contenidos" (click)="abrirDetalle(c.id_contenido)">
+            <div class="carousel-card__poster">
+              <div class="carousel-card__placeholder">{{ c.titulo.charAt(0) }}</div>
+              <div class="carousel-card__hover">
+                <span class="play-btn-sm">&#9654;</span>
+                <span *ngIf="c.puntuacion_promedio" class="badge badge-gold">&#9733; {{ c.puntuacion_promedio }}</span>
+                <span class="badge" [class]="c.tipo === 'Pelicula' ? 'badge-red' : 'badge-green'">{{ c.tipo }}</span>
+              </div>
+            </div>
+            <p class="carousel-card__title">{{ c.titulo }}</p>
+            <span class="carousel-card__year">{{ c.anio_estreno }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<app-detail-modal *ngIf="selectedId()" [contenidoId]="selectedId()!" (closed)="cerrarDetalle()"></app-detail-modal>
