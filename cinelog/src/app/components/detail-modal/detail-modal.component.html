@@ -1,0 +1,158 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal detail-modal">
+    <button class="modal__close" (click)="close()">X</button>
+    <div *ngIf="loading()" class="loading-screen"><div class="spinner"></div><p>Cargando...</p></div>
+    <ng-container *ngIf="!loading() && contenido()">
+      <div class="detail-hero">
+        <div class="detail-hero__bg" [style.background-image]="'url(https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=900&q=80)'"></div>
+        <div class="detail-hero__overlay"></div>
+        <div class="detail-hero__content">
+          <div class="detail-hero__badges">
+            <span class="badge" [class]="contenido().tipo === 'Pelicula' ? 'badge-red' : 'badge-green'">{{ contenido().tipo }}</span>
+            <span class="badge badge-gray" *ngFor="let g of contenido().generos?.slice(0,3)">{{ g }}</span>
+          </div>
+          <h1 class="detail-hero__title">{{ contenido().titulo }}</h1>
+          <div class="detail-hero__meta">
+            <span *ngIf="contenido().anio_estreno">{{ contenido().anio_estreno }}</span>
+            <span *ngIf="contenido().extra?.duracion_minutos">{{ contenido().extra.duracion_minutos }} min</span>
+            <span *ngIf="contenido().extra?.num_temporadas">{{ contenido().extra.num_temporadas }} temporadas</span>
+            <span *ngIf="contenido().puntuacion_promedio" class="rating-badge">
+              &#9733; {{ contenido().puntuacion_promedio }}/10 ({{ contenido().total_calificaciones }} votos)
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-tabs">
+        <button [class.active]="activeTab() === 'info'" (click)="setTab('info')">Informacion</button>
+        <button *ngIf="contenido().tipo === 'Serie'" [class.active]="activeTab() === 'episodios'" (click)="setTab('episodios')">Episodios</button>
+        <button [class.active]="activeTab() === 'calificaciones'" (click)="setTab('calificaciones')">Calificaciones</button>
+        <button [class.active]="activeTab() === 'finales'" (click)="setTab('finales')">Finales Alternativos</button>
+      </div>
+
+      <div class="detail-body">
+
+        <div *ngIf="activeTab() === 'info'" class="tab-content">
+          <section *ngIf="contenido().sinopsis">
+            <h3>Sinopsis</h3>
+            <p class="sinopsis">{{ contenido().sinopsis }}</p>
+          </section>
+          <section *ngIf="contenido().reparto?.length">
+            <h3>Reparto y Directores</h3>
+            <div class="reparto-grid">
+              <div class="persona-card" *ngFor="let p of contenido().reparto">
+                <div class="persona-avatar">{{ p.primer_nombre.charAt(0) }}</div>
+                <div class="persona-info">
+                  <strong>{{ p.primer_nombre }} {{ p.primer_apellido }}</strong>
+                  <span class="rol-badge" [class]="p.rol === 'Director' ? 'director' : 'actor'">{{ p.rol }}</span>
+                  <small *ngIf="p.nacionalidad">{{ p.nacionalidad }}</small>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section *ngIf="auth.isLoggedIn() && misListas().length">
+            <h3>Agregar a una lista</h3>
+            <div class="add-to-list">
+              <select [(ngModel)]="listaSeleccionada" class="list-select">
+                <option [value]="null">Selecciona una lista...</option>
+                <option *ngFor="let l of misListas()" [value]="l.id_lista">{{ l.nombre }}</option>
+              </select>
+              <button class="btn btn-secondary" (click)="agregarALista()">+ Agregar</button>
+            </div>
+          </section>
+        </div>
+
+        <div *ngIf="activeTab() === 'episodios' && contenido().tipo === 'Serie'" class="tab-content">
+          <div class="temporada" *ngFor="let t of contenido().extra?.temporadas">
+            <button class="temporada__header" (click)="loadEpisodios(t)">
+              <span>Temporada {{ t.numero_temporada }}</span>
+              <span class="temporada__meta">{{ t.num_episodios }} episodios</span>
+              <span class="chevron" [class.open]="selectedTemporada()?.id_temporada === t.id_temporada">v</span>
+            </button>
+            <div *ngIf="selectedTemporada()?.id_temporada === t.id_temporada" class="episodios-list">
+              <div *ngIf="loadingEpisodios()" class="loading-screen" style="min-height:80px"><div class="spinner"></div></div>
+              <ng-container *ngIf="!loadingEpisodios()">
+                <div class="episodio" *ngFor="let e of episodios()">
+                  <span class="ep-num">{{ e.numero_episodio }}</span>
+                  <div class="ep-info">
+                    <strong>{{ e.titulo }}</strong>
+                    <span *ngIf="e.duracion_minutos">{{ e.duracion_minutos }} min</span>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="activeTab() === 'calificaciones'" class="tab-content">
+          <section *ngIf="auth.isLoggedIn()">
+            <h3>{{ miCalificacion() ? 'Tu calificacion' : 'Califica este contenido' }}</h3>
+            <div class="rating-form">
+              <div class="star-selector">
+                <button class="star-btn" *ngFor="let i of stars_list"
+                        [class]="getStarClass(i)"
+                        (mouseenter)="setHoverStar(i)" (mouseleave)="clearHover()"
+                        (click)="setStar(i)">&#9733;</button>
+                <span class="star-value">{{ getScore() }}/10</span>
+              </div>
+              <div class="form-group">
+                <label>Resena (opcional)</label>
+                <textarea [(ngModel)]="calificacionForm.resenia" placeholder="Que te parecio?"></textarea>
+              </div>
+              <button class="btn btn-primary" (click)="guardarCalificacion()" [disabled]="calificandoLoading()">
+                {{ miCalificacion() ? 'Actualizar calificacion' : 'Guardar calificacion' }}
+              </button>
+            </div>
+          </section>
+          <hr class="divider">
+          <section>
+            <h3>Calificaciones ({{ contenido().calificaciones?.length || 0 }})</h3>
+            <div *ngIf="!contenido().calificaciones?.length" class="empty-state">
+              <p>Se el primero en calificar este contenido</p>
+            </div>
+            <div *ngIf="contenido().calificaciones?.length" class="calificaciones-list">
+              <div class="calificacion-item" *ngFor="let c of contenido().calificaciones">
+                <div class="cal-header">
+                  <span class="cal-user">{{ c.nombre_usuario }}</span>
+                  <span class="cal-score">{{ starsText(c.puntuacion) }} {{ c.puntuacion }}/10</span>
+                  <span class="cal-date">{{ c.fecha_calificacion | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <p *ngIf="c.resenia" class="cal-resenia">{{ c.resenia }}</p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div *ngIf="activeTab() === 'finales'" class="tab-content">
+          <section *ngIf="auth.isLoggedIn()">
+            <h3>{{ miFinal() ? 'Tu final alternativo' : 'Escribe tu final alternativo' }}</h3>
+            <p class="section-desc">Como terminarias tu esta historia?</p>
+            <div class="form-group">
+              <textarea [(ngModel)]="finalForm.texto_final" placeholder="Erase una vez al final de la historia..." style="min-height:140px"></textarea>
+            </div>
+            <button class="btn btn-primary" (click)="guardarFinal()" [disabled]="finalLoading()">
+              {{ miFinal() ? 'Actualizar mi final' : 'Guardar mi final' }}
+            </button>
+          </section>
+          <hr class="divider">
+          <section>
+            <h3>Finales de la comunidad ({{ todosFinales().length }})</h3>
+            <div *ngIf="!todosFinales().length" class="empty-state">
+              <p>Nadie ha escrito un final todavia. Se el primero!</p>
+            </div>
+            <div *ngIf="todosFinales().length" class="finales-list">
+              <div class="final-item" *ngFor="let f of todosFinales()">
+                <div class="final-header">
+                  <span class="final-user">{{ f.nombre_usuario }}</span>
+                  <span class="final-date">{{ f.fecha_escritura | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <p class="final-texto">{{ f.texto_final }}</p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </ng-container>
+  </div>
+</div>

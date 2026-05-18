@@ -1,0 +1,58 @@
+<div class="login-page">
+  <div class="login-bg"></div>
+  <div class="login-overlay"></div>
+  <div class="login-card">
+    <div class="login-card__logo">CINELOG</div>
+    <div class="login-tabs">
+      <button [class.active]="mode() === 'login'" (click)="setMode('login')">Iniciar sesion</button>
+      <button [class.active]="mode() === 'register'" (click)="setMode('register')">Registrarse</button>
+    </div>
+    <form *ngIf="mode() === 'login'" (ngSubmit)="onLogin()" class="login-form">
+      <div class="form-group">
+        <label>Correo electronico</label>
+        <input type="email" [(ngModel)]="loginData.correo_electronico" name="email" placeholder="tu@correo.com" />
+      </div>
+      <div class="form-group">
+        <label>Contrasena</label>
+        <input type="password" [(ngModel)]="loginData.contrasenia" name="password" placeholder="..." />
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" [disabled]="loading()">
+        <span *ngIf="loading()" class="spinner-sm"></span>
+        Iniciar sesion
+      </button>
+    </form>
+    <form *ngIf="mode() === 'register'" (ngSubmit)="onRegister()" class="login-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Primer nombre</label>
+          <input type="text" [(ngModel)]="registerData.primer_nombre" name="fname" placeholder="Juan" />
+        </div>
+        <div class="form-group">
+          <label>Primer apellido</label>
+          <input type="text" [(ngModel)]="registerData.primer_apellido" name="lname" placeholder="Garcia" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nombre de usuario</label>
+        <input type="text" [(ngModel)]="registerData.nombre_usuario" name="username" placeholder="juangarcia" />
+      </div>
+      <div class="form-group">
+        <label>Correo electronico</label>
+        <input type="email" [(ngModel)]="registerData.correo_electronico" name="email" placeholder="tu@correo.com" />
+      </div>
+      <div class="form-group">
+        <label>Contrasena</label>
+        <input type="password" [(ngModel)]="registerData.contrasenia" name="password" placeholder="..." />
+      </div>
+      <div class="form-group">
+        <label>Fecha de nacimiento</label>
+        <input type="date" [(ngModel)]="registerData.fecha_nacimiento" name="birthdate" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" [disabled]="loading()">
+        <span *ngIf="loading()" class="spinner-sm"></span>
+        Crear cuenta
+      </button>
+    </form>
+    <p class="login-footer">Plataforma academica - Universidad El Bosque 2026.</p>
+  </div>
+</div>
