@@ -22,5 +22,4 @@ CineLog-BD1/
 ├── cinelog_backend/
 ├── cinelog/
 ├── database/
-│   └── cinelog_db.sql
 └── README.md
