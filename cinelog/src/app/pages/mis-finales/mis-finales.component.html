@@ -1,0 +1,33 @@
+<div class="page-wrapper">
+  <div class="page-header">
+    <h1>Mis Finales Alternativos</h1>
+    <p>Los finales que tu escribirias para tus contenidos favoritos</p>
+  </div>
+  <div *ngIf="loading()" class="loading-screen"><div class="spinner"></div></div>
+  <div *ngIf="!loading() && !finales().length" class="empty-state">
+    <div class="empty-icon">✍️</div>
+    <h3>No has escrito ningun final todavia</h3>
+    <p>Explora el catalogo y escribe tu propio final alternativo</p>
+  </div>
+  <div *ngIf="!loading() && finales().length" class="finales-list">
+    <div class="final-card" *ngFor="let f of finales()">
+      <div class="final-card__header">
+        <div class="final-card__poster" (click)="abrirDetalle(f.id_contenido)">{{ f.titulo.charAt(0) }}</div>
+        <div class="final-card__meta">
+          <h3 (click)="abrirDetalle(f.id_contenido)">{{ f.titulo }}</h3>
+          <span class="badge" [class]="f.tipo === 'Pelicula' ? 'badge-red' : 'badge-green'">{{ f.tipo }}</span>
+          <span class="final-date">{{ f.fecha_escritura | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <button class="expand-btn" (click)="toggleExpand(f.id_contenido)">
+          {{ isExpanded(f.id_contenido) ? 'Cerrar' : 'Ver' }}
+        </button>
+      </div>
+      <p *ngIf="!isExpanded(f.id_contenido)" class="final-preview">{{ preview(f.texto_final) }}</p>
+      <div *ngIf="isExpanded(f.id_contenido)" class="final-full">
+        <p>{{ f.texto_final }}</p>
+        <button class="btn btn-ghost" style="margin-top:12px" (click)="abrirDetalle(f.id_contenido)">Editar este final</button>
+      </div>
+    </div>
+  </div>
+</div>
+<app-detail-modal *ngIf="selectedId()" [contenidoId]="selectedId()!" (closed)="cerrarDetalle()"></app-detail-modal>
